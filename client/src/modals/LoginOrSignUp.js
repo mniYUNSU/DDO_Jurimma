@@ -203,6 +203,17 @@ const ErrorMsg = styled.div`
 function LoginOrSignUp() {
   const dispatch = useDispatch();
   const state = useSelector((state) => state.userInfoReducer);
+
+  // ! google login
+  const google_client_id = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
+  const redirect_uri =
+    process.env.REACT_APP_REDIRECT_URL || `http://localhost:3000`;
+
+  const GOOGLE_LOGIN_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${google_client_id}&redirect_uri=${redirect_uri}&response_type=code&scope=profile email&access_type=offline`;
+
+  console.log('LoginModal: userState', state);
+
   const url = process.env.REACT_APP_API_URL || `http://localhost:4000`;
   const closeLoginOrSignupModal = (isOpen) => {
     dispatch(setLoginOrSignupModal(isOpen));
@@ -343,6 +354,12 @@ function LoginOrSignUp() {
     }
   };
 
+  //! googleLogin Handler
+  const googleLoginHandler = () => {
+    localStorage.setItem('socialType', 'google');
+    window.location.assign(GOOGLE_LOGIN_URL);
+  };
+
   const [currentTab, setCurrentTab] = useState(0);
   const selectMenuHandler = (index) => {
     setErrorMsg(''); // 탭 옮기면 에러메세지 다 사라지도록
@@ -365,7 +382,7 @@ function LoginOrSignUp() {
               카카오 로그인
             </KakaoLogin>
 
-            <GoogleLogin>
+            <GoogleLogin onClick={googleLoginHandler}>
               <FontAwesomeIcon icon={['fab', 'google']} />
               구글 로그인
             </GoogleLogin>

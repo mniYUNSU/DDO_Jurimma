@@ -13,10 +13,11 @@ import Quiz from './modals/Quiz';
 import EditContent from './modals/EditContent';
 import Logout from './modals/Logout';
 import SignOut from './modals/SignOut';
+import swal from 'sweetalert';
 
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setLogin } from './actions/index';
+import { setLogin, setAccessToken, setUserInfo } from './actions/index';
 import NewContent from './modals/NewContent';
 import { useEffect } from 'react';
 
@@ -37,7 +38,53 @@ function App() {
     } else {
       dispatch(setLogin(false));
     }
+
+    const authorizationCode = new URL(window.location.href).searchParams.get(
+      'code'
+    );
+    if (authorizationCode) {
+      console.log(authorizationCode);
+      handleSocialLogin(authorizationCode);
+    }
   }, []);
+
+  const handleSocialLogin = async (authorizationCode) => {
+    const url = process.env.REACT_APP_API_URL || `http://localhost:4000`;
+    console.log('authorizationCode22 : ', authorizationCode);
+    const socialType = localStorage.getItem('socialType');
+
+    await axios({
+      method: 'POST',
+      url: `${url}/user/${socialType}`,
+      data: {
+        authorizationCode: authorizationCode,
+      },
+    })
+      .then((res) => {
+        // axios응답으로 redux 업데이트
+        dispatch(setLogin(true));
+        console.log('googleRes : ', res);
+        dispatch(setAccessToken(res.data.accessToken)); // axios 응답으로 accessToken 업데이트
+        dispatch(setUserInfo(res.data.userInfo)); //
+        console.log('LoginModal: res.data.data', res.data.userInfo);
+        console.log('LoginModal: userState', state);
+        swal({
+          title: '로그인이 완료되었습니다!',
+          text: '만반잘부 😆 (만나서 반갑고 잘 부탁해)!',
+          icon: 'success',
+        }); // sweet alert로 안내
+        // window.location.replace('/');
+        localStorage.removeItem('socialType');
+      })
+      .catch((err) => {
+        console.log(err);
+        swal({
+          title: '로그인에 실패하였습니다',
+          text: '다시 로그인 해주세요!',
+          icon: 'warning',
+        });
+      });
+  };
 
   const {
     isShowLoginOrSignupModal,
